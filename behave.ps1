@@ -22,10 +22,10 @@ function Command-Available {
 }
 
 # ensure pipenv available
-# if (!(Command-Available pipenv)) {
-#     "installing 'pipenv'"
-#     pip3 install pipenv --user
-# }
+if (!(Command-Available pipenv)) {
+    "installing 'pipenv'"
+    pip3 install pipenv --user
+}
 
 # try {
 #     # set working dir
