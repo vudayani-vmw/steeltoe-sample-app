@@ -34,8 +34,8 @@ try {
 #     # initialize framework if needed
     if (!(Test-Path $FrameworkInitFlag)) {
         "installing framework"
-        pipenv --version
-        # pipenv install --three --ignore-pipfile 2>&1 | %{ "$_" }
+        pipenv -version
+        pipenv sync
         # New-Item -Name $FrameworkInitFlag -ItemType file
     }
 
