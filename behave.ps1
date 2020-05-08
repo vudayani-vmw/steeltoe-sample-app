@@ -27,9 +27,9 @@ if (!(Command-Available pipenv)) {
     pip3 install pipenv --user
 }
 
-# try {
-#     # set working dir
-#     Push-Location $BaseDir
+try {
+    # set working dir
+    Push-Location $BaseDir
 
 #     # initialize framework if needed
 #     if (!(Test-Path $FrameworkInitFlag)) {
@@ -41,9 +41,9 @@ if (!(Command-Available pipenv)) {
 #     # run samples
 #     pipenv run behave $Args 2>&1 | %{ "$_" }
 
-# }
-# finally {
-#     Pop-Location
-#     $Env:Path = $OldPath
-# }
+}
+finally {
+    Pop-Location
+    $Env:Path = $OldPath
+}
 
