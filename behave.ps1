@@ -28,15 +28,15 @@ if (!(Command-Available pipenv)) {
 }
 
 try {
-    # set working dir
+#     # set working dir
     Push-Location $BaseDir
 
 #     # initialize framework if needed
-#     if (!(Test-Path $FrameworkInitFlag)) {
-#         "installing framework"
-#         pipenv install --three --ignore-pipfile
-#         New-Item -Name $FrameworkInitFlag -ItemType file | Out-Null
-#     }
+    if (!(Test-Path $FrameworkInitFlag)) {
+        "installing framework"
+        pipenv install --three --ignore-pipfile
+        New-Item -Name $FrameworkInitFlag -ItemType file
+    }
 
 #     # run samples
 #     pipenv run behave $Args 2>&1 | %{ "$_" }
