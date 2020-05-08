@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - 2.x
+      - scratch
   paths:
     include:
       - config/*
