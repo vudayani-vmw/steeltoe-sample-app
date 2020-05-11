@@ -30,6 +30,7 @@ if (!(Command-Available pipenv)) {
 try {
 #     # set working dir
     Push-Location $BaseDir
+    New-Item test.log
 
 #     # initialize framework if needed
     if (!(Test-Path $FrameworkInitFlag)) {

@@ -35,4 +35,5 @@ if ! env_exists; then
 fi
 
 # run samples
+touch test.log
 echo exec pipenv run behave $*
