@@ -49,6 +49,8 @@ namespace OrderService
         {
             app.UseAuthentication();
 
+            app.UseRouting();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
