@@ -69,13 +69,13 @@ namespace OrderService.Local
             });
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                 .AddCloudFoundryJwtBearer(Configuration);
+                .AddCloudFoundryJwtBearer(Configuration);
 
             services.AddAuthorization(options =>
             {
-                // options.AddPolicy("Orders", policy => policy.RequireClaim("scope", "order.me"));
-                options.AddPolicy("AdminOrders", policy => policy.RequireClaim("scope", "clients.read"));
-            });
+                options.AddPolicy("Orders", policy => policy.RequireClaim("scope", "order.read"));
+                options.AddPolicy("AdminOrders", policy => policy.RequireClaim("scope", "orders.admin"));
+            }); 
 
             services.AddDbContext<IOrderStorage, OrderStorage>(options => options.UseMySql(Configuration));
             services.AddTransient<IOrderStorage, OrderStorage>();

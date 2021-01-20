@@ -2,6 +2,7 @@
 using Common.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -22,12 +23,19 @@ namespace AdminPortal
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<Branding>(Configuration.GetSection("Branding"));
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+            services.Configure<CookiePolicyOptions>(options =>
+            {
+                options.CheckConsentNeeded = context => false;
+                options.HttpOnly = HttpOnlyPolicy.Always;
+                options.MinimumSameSitePolicy = SameSiteMode.Strict;
+                options.Secure = CookieSecurePolicy.SameAsRequest;
+            });
 
             services.AddAuthentication(options =>
                 {
@@ -38,12 +46,24 @@ namespace AdminPortal
                 {
                     options.AccessDeniedPath = new PathString("/Home/AccessDenied");
                 })
-                //.AddCloudFoundryOAuth(Configuration);
-                .AddCloudFoundryOpenIdConnect(Configuration);
+                .AddCloudFoundryOAuth(Configuration, (options, configure) => {
+                    var uaa = "http://localhost:8080/uaa";
+
+                    options.SaveTokens = true;
+                    options.ValidateCertificates = false;
+                    options.ClientId = "adminportal";
+                    options.ClientSecret = "adminportal_secret";
+                    options.AuthorizationEndpoint = uaa + CloudFoundryDefaults.AuthorizationUri;
+                    options.TokenEndpoint = uaa + CloudFoundryDefaults.AccessTokenUri;
+                    options.UserInformationEndpoint = uaa + CloudFoundryDefaults.UserInfoUri;
+                    options.TokenInfoUrl = uaa + CloudFoundryDefaults.CheckTokenUri;
+
+                    options.BackchannelHttpHandler = CloudFoundryHelper.GetBackChannelHandler(false);
+                });
 
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("MenuWrite", policy => policy.RequireClaim("scope", "menu.write"));
+                options.AddPolicy("MenuWrite", policy => policy.RequireClaim("scope", "orders.read"));
                 options.AddPolicy("AdminOrders", policy => policy.RequireClaim("scope", "order.admin"));
             });
 
@@ -68,13 +88,15 @@ namespace AdminPortal
             }
 
             app.UseStaticFiles();
+            
+            app.UseRouting();
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedProto
             });
 
-            app.UseRouting();
+            app.UseCookiePolicy();
 
             app.UseAuthentication();
 

@@ -20,7 +20,7 @@ namespace AdminPortal
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                })
-                .UseCloudHosting();
+                });
+                // .UseCloudHosting();
     }
 }
