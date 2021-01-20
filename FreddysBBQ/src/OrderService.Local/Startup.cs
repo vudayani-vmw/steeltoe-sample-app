@@ -11,6 +11,7 @@ using System;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Steeltoe.Security.Authentication.CloudFoundry;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Text;
 
 namespace OrderService.Local
 {
@@ -23,11 +24,10 @@ namespace OrderService.Local
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllers();
+
             services.AddSwaggerGen(config =>
             {
                 config.SwaggerDoc("v1", new OpenApiInfo
@@ -68,12 +68,30 @@ namespace OrderService.Local
                 });
             });
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddCloudFoundryJwtBearer(Configuration);
+           services.AddAuthentication(x =>
+                {
+                    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddCloudFoundryJwtBearer(Configuration, (options, configurer) => {
+                    var uaa = "http://localhost:8080/uaa";
+
+                    var defaultOptions = new CloudFoundryJwtBearerOptions();
+
+                    options.RequireHttpsMetadata = false;
+                    options.ClaimsIssuer = uaa + CloudFoundryDefaults.AccessTokenUri;
+                    options.BackchannelHttpHandler = CloudFoundryHelper.GetBackChannelHandler(false);
+                    options.TokenValidationParameters = CloudFoundryHelper.GetTokenValidationParameters(
+                        defaultOptions.TokenValidationParameters, 
+                        uaa + CloudFoundryDefaults.JwtTokenUri, 
+                        options.BackchannelHttpHandler, false,
+                        new AuthServerOptions { AdditionalAudiences = new string[] { "orders" } });
+                });
 
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("Orders", policy => policy.RequireClaim("scope", "order.read"));
+                options.AddPolicy("Orders", policy => policy.RequireClaim("scope", "orders.read"));
                 options.AddPolicy("AdminOrders", policy => policy.RequireClaim("scope", "orders.admin"));
             }); 
 
@@ -81,7 +99,6 @@ namespace OrderService.Local
             services.AddTransient<IOrderStorage, OrderStorage>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())

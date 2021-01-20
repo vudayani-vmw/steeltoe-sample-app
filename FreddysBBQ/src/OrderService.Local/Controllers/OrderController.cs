@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace OrderService.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = "Orders")]
     [Route("api/[controller]")]
     [ApiController]
     public class OrderController : ControllerBase
