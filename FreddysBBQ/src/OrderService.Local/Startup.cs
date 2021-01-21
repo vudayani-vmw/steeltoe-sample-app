@@ -11,7 +11,6 @@ using System;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Steeltoe.Security.Authentication.CloudFoundry;
 using Microsoft.AspNetCore.HttpOverrides;
-using System.Text;
 
 namespace OrderService.Local
 {
@@ -41,18 +40,16 @@ namespace OrderService.Local
                         Name = "Apache License 2.0",
                         Url = new Uri("https://raw.githubusercontent.com/SteeltoeOSS/Samples/master/License.txt")
                     }
-
                 });
 
                 var jwtSecurityScheme = new OpenApiSecurityScheme
                 {
-                    Scheme = "bearer",
+                    Scheme = "Bearer",
                     BearerFormat = "JWT",
                     Name = "JWT Authentication",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.Http,
                     Description = "Add your JWT Bearer token below (do not prefix with 'Bearer')",
-
                     Reference = new OpenApiReference
                     {
                         Id = JwtBearerDefaults.AuthenticationScheme,
@@ -68,27 +65,34 @@ namespace OrderService.Local
                 });
             });
 
-           services.AddAuthentication(x =>
-                {
-                    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                })
-                .AddCloudFoundryJwtBearer(Configuration, (options, configurer) => {
-                    var uaa = "http://localhost:8080/uaa";
+            services.AddAuthentication(x =>
+                 {
+                     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                     x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                     // x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                 })
+#if !DEBUG
+                 .AddCloudFoundryJwtBearer(Configuration);
+#endif
+#if DEBUG
+                // This overrides Audience validation for Swagger Doc 
+                // Ref: AuthserverOptions AdditionalAudiences -> "orderservice"
+                 .AddCloudFoundryJwtBearer(Configuration, (options, configuration) => {
+                    
+                    var cloudFoundryJwtBearerOptions = new CloudFoundryJwtBearerOptions();
+                    
+                    var securitySection = Configuration.GetSection(CloudFoundryDefaults.SECURITY_CLIENT_SECTION_PREFIX);
+                    securitySection.Bind(cloudFoundryJwtBearerOptions);
 
-                    var defaultOptions = new CloudFoundryJwtBearerOptions();
-
-                    options.RequireHttpsMetadata = false;
-                    options.ClaimsIssuer = uaa + CloudFoundryDefaults.AccessTokenUri;
                     options.BackchannelHttpHandler = CloudFoundryHelper.GetBackChannelHandler(false);
-                    options.TokenValidationParameters = CloudFoundryHelper.GetTokenValidationParameters(
-                        defaultOptions.TokenValidationParameters, 
-                        uaa + CloudFoundryDefaults.JwtTokenUri, 
-                        options.BackchannelHttpHandler, false,
-                        new AuthServerOptions { AdditionalAudiences = new string[] { "orders" } });
-                });
 
+                    options.TokenValidationParameters = CloudFoundryHelper.GetTokenValidationParameters(
+                        cloudFoundryJwtBearerOptions.TokenValidationParameters,
+                        cloudFoundryJwtBearerOptions.JwtKeyUrl,
+                        options.BackchannelHttpHandler, false,
+                        new AuthServerOptions { AdditionalAudiences = new string[] { "orderservice" } });
+                });
+#endif
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("Orders", policy => policy.RequireClaim("scope", "orders.read"));
@@ -105,7 +109,9 @@ namespace OrderService.Local
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "OrderService Demo"));
+                app.UseSwaggerUI(options => {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "OrderService Demo");
+                });
             }
 
             app.UseRouting();
