@@ -43,18 +43,11 @@ Should Return
 }
 ```
 
-<i>TODO: Password grant not yet working</i>
-
-```
-`curl -v -d"username=user1&password=password&client_id=orderserviceapi&grant_type=password" -u "orderserviceapi:o463qXwa" http://localhost:8080/uaa/oauth/token`
-```
-
 ## Eureka Server
 
 `docker run -d --name steeltoe-eureka -p 8761:8761 steeltoeoss/eureka-server`
 
 TODO:
 
-- Password grant access
 - Autogenerate DB in new OrderService Project
   - <i>For now add `dotnet ef database update instructions`</i>

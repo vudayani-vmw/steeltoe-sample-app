@@ -46,20 +46,7 @@ namespace AdminPortal
                 {
                     options.AccessDeniedPath = new PathString("/Home/AccessDenied");
                 })
-                .AddCloudFoundryOAuth(Configuration, (options, configure) => {
-                    var uaa = "http://localhost:8080/uaa";
-
-                    options.SaveTokens = true;
-                    options.ValidateCertificates = false;
-                    options.ClientId = "adminportal";
-                    options.ClientSecret = "adminportal_secret";
-                    options.AuthorizationEndpoint = uaa + CloudFoundryDefaults.AuthorizationUri;
-                    options.TokenEndpoint = uaa + CloudFoundryDefaults.AccessTokenUri;
-                    options.UserInformationEndpoint = uaa + CloudFoundryDefaults.UserInfoUri;
-                    options.TokenInfoUrl = uaa + CloudFoundryDefaults.CheckTokenUri;
-
-                    options.BackchannelHttpHandler = CloudFoundryHelper.GetBackChannelHandler(false);
-                });
+                .AddCloudFoundryOAuth(Configuration);
 
             services.AddAuthorization(options =>
             {
