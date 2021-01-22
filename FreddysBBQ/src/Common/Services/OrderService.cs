@@ -12,7 +12,7 @@ namespace Common.Services
     {
         // TODO: Add orders url as appsettings config
         // private const string ORDERS_URL = "http://order-service/orders";
-        private const string ORDERS_URL = "http://localhost:62687/order";
+        private const string ORDERS_URL = "http://localhost:63758/api/order";
 
         public OrderService(IDiscoveryClient client, ILoggerFactory factory, IHttpContextAccessor context) :
             base(client, factory.CreateLogger<MenuService>(), context)

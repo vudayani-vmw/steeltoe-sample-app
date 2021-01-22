@@ -1,10 +1,10 @@
 ﻿using Common.Models;
 using Common.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using OrderService.Models;
+using OrderService.Providers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -13,68 +13,90 @@ using System.Threading.Tasks;
 
 namespace OrderService.Controllers
 {
-    [Route("/myorders")]
+    [Authorize(Policy = "Orders")]
+    [Route("/customer")]
     public class CustomerOrderController : Controller
     {
-        private OrderContext _dbContext;
-        private ILogger<CustomerOrderController> _logger;
-        private IMenuService _menuService;
+        private readonly IOrderStorage orderStorage;
+        private readonly ILogger<CustomerOrderController> logger;
+        private readonly IMenuService menuService;
 
-        public CustomerOrderController(OrderContext dbContext, IMenuService menuService, ILoggerFactory fact)
+        public CustomerOrderController(IOrderStorage orderStorage, IMenuService menuService, ILogger<CustomerOrderController> logger)
         {
-            _dbContext = dbContext;
-            _logger = fact.CreateLogger<CustomerOrderController>();
-            _menuService = menuService;
+            this.orderStorage = orderStorage;
+            this.menuService = menuService;
+            this.logger = logger;
         }
 
-        // GET /myorders
-        [HttpGet]
-        [Authorize(Policy = "Orders")]
-        public async Task<List<Order>> GetMyOrders()
+        [HttpGet("order")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(IEnumerable<Order>), StatusCodes.Status200OK)]
+        public ActionResult<IEnumerable<Order>> GetMyOrders()
         {
-            var customerId = GetCustomerId(this.HttpContext.User.Identity);
-            _logger.LogInformation("CustomerId=" + customerId);
+            var customerId = GetCustomerId(HttpContext.User.Identity);
+            
             if (string.IsNullOrEmpty(customerId))
             {
-                return new List<Order>();
+                logger.LogWarning($"Customer ID {customerId} is not found");
+
+                return Ok(Enumerable.Empty<Order>());
+            }
+            else
+            {
+                logger.LogInformation($"Retrieving order for CustomerId ID {customerId}");
             }
 
-            return await _dbContext.Orders.Where(o => o.CustomerId == customerId)
-                        .Include(o => o.OrderItems).ToListAsync();
+            var orders = orderStorage.GetOrderByCustomerId(customerId);
+
+            if(!orders.Any())
+            {
+                logger.LogWarning($"No orders found for Customer ID {customerId}");
+            }
+
+            return Ok(orders);
         }
 
-        // POST /myorders
-        [HttpPost]
-        [Authorize(Policy = "Orders")]
-        public async Task<IActionResult> Post([FromBody]Dictionary<long, int?> itemsAndQuantities)
+        [HttpPost("order")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(Order), StatusCodes.Status200OK)]
+        public async ValueTask<ActionResult<Order>> Post([FromBody]Dictionary<long, int?> itemsAndQuantities)
         {
-            if (itemsAndQuantities == null)
+            if (itemsAndQuantities is null)
             {
-                _logger.LogCritical("No order items detected!");
+                logger.LogCritical("No order items detected!");
+
                 return BadRequest("Empty orders not allowed");
             }
 
-            LogClaims(this.HttpContext.User.Identity);
-            Order order = new Order
+            LogClaims(HttpContext.User.Identity);
+
+            var order = new Order
             {
-                CustomerId = GetCustomerId(this.HttpContext.User.Identity),
-                Email = GetEmail(this.HttpContext.User.Identity),
-                FirstName = GetFirstName(this.HttpContext.User.Identity),
-                LastName = GetLastName(this.HttpContext.User.Identity)
+                CustomerId = GetCustomerId(HttpContext.User.Identity),
+                Email = GetEmail(HttpContext.User.Identity),
+                FirstName = GetFirstName(HttpContext.User.Identity),
+                LastName = GetLastName(HttpContext.User.Identity),
+                Total = 0
             };
 
-            _logger.LogInformation("CustomerId=" + order.CustomerId);
             if (string.IsNullOrEmpty(order.CustomerId))
             {
+                logger.LogCritical("No Customer ID found for authenticated user");
+
                 return BadRequest();
             }
+            else
+            {
+                logger.LogInformation($"Adding order for Customer ID {order.CustomerId}");
+            }
 
-            float total = 0;
             foreach (var reqItem in itemsAndQuantities)
             {
-                _logger.LogDebug("Order item key: {key}, Quantity: {quantity}", reqItem.Key, reqItem.Value ?? 0);
-                long itemId = reqItem.Key;
-                int quantity = reqItem.Value ?? 0;
+                var itemId = reqItem.Key;
+                var quantity = reqItem.Value ?? 0;
+
+                logger.LogDebug($"Order item key: {itemId}, Quantity: {quantity}");
+
                 if (itemId < 0 || quantity < 0)
                 {
                     return BadRequest();
@@ -85,51 +107,57 @@ namespace OrderService.Controllers
                     continue;
                 }
 
-                MenuItem item = await _menuService.GetMenuItemAsync(itemId);
+                MenuItem item = await menuService.GetMenuItemAsync(itemId);
+
                 if (item == null)
                 {
-                    _logger.LogCritical("Unable to find menuitem: " + itemId);
+                    logger.LogCritical("Unable to find menu item: " + itemId);
+                    
                     continue;
                 }
 
-                OrderItem orderItem = new OrderItem
+                var orderItem = new OrderItem
                 {
-                    Order = order,
+                    // Order = order,
                     Quantity = quantity,
                     MenuItemId = itemId,
                     Name = item.Name,
                     Price = item.Price
                 };
+
                 order.OrderItems.Add(orderItem);
-                total = total + (item.Price * quantity);
+                order.Total += (item.Price * quantity);
             }
 
             if (order.OrderItems.Count > 0)
             {
-                order.Total = total;
-                _dbContext.Orders.Add(order);
-                await _dbContext.SaveChangesAsync();
-                return Ok();
+                var createdOrder = await orderStorage.AddOrderAsync(order);
+
+                return Ok(createdOrder);
             }
             else
             {
-                _logger.LogCritical("Somehow ended up with no order items");
-            }
+                logger.LogCritical("Somehow ended up with no order items");
 
-            return Ok();
+                return Conflict(
+                    @"State of information provided is incorrect. 
+                    Please ensure at least one menu item has quantity greater than 0. 
+                    Please ensure menu item IDs are still current. ");
+            }
         }
 
         private void LogClaims(IIdentity identity)
         {
-            var claims = identity as ClaimsIdentity;
-            if (claims == null)
+            if (identity is not ClaimsIdentity claims)
             {
-                _logger.LogError("Unable to access ClaimsIdentity");
+                logger.LogError("Unable to access ClaimsIdentity");
+
                 return;
             }
-            foreach(Claim c in claims.Claims)
+
+            foreach (Claim c in claims.Claims)
             {
-                _logger.LogInformation(string.Format("Claim: {0}/{1}/{2}", c.Type, c.Value, c.ValueType));
+                logger.LogInformation(string.Format("Claim: {0}/{1}/{2}", c.Type, c.Value, c.ValueType));
             }
         }
 
@@ -155,17 +183,19 @@ namespace OrderService.Controllers
 
         private string GetClaim(IIdentity identity, string claim)
         {
-            var claims = identity as ClaimsIdentity;
-            if (claims == null)
+            if (identity is not ClaimsIdentity claims)
             {
-                _logger.LogError("Unable to access ClaimsIdentity");
+                logger.LogError("Unable to access ClaimsIdentity");
+
                 return null;
             }
 
             var idClaim = claims.FindFirst(claim);
-            if (idClaim == null)
+
+            if (idClaim is null)
             {
-                _logger.LogError("Unable to access: " + claim);
+                logger.LogError($"Unable to access: {claim}");
+
                 return null;
             }
 

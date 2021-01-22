@@ -17,8 +17,8 @@ namespace Common.Models
         [JsonProperty("quantity")]
         public int Quantity { get; set; }
 
-        [JsonIgnore]
-        public virtual Order Order { get; set; }
+        // [JsonIgnore]
+        // public virtual Order Order { get; set; }
         public OrderItem()
         {
         }
