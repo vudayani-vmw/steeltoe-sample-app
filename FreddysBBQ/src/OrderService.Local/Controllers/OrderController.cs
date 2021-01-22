@@ -5,11 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using OrderService.Providers;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OrderService.Controllers
 {
-    [Authorize(Policy = "Orders")]
+    [Authorize(Policy = "AdminOrders")]
     [Route("api/[controller]")]
     [ApiController]
     public class OrderController : ControllerBase
@@ -26,11 +27,18 @@ namespace OrderService.Controllers
         [HttpGet]
         [Produces("application/json")]
         [ProducesResponseType(typeof(IEnumerable<Order>), StatusCodes.Status200OK)]
-        public IEnumerable<Order> Get()
+        public ActionResult<IEnumerable<Order>> Get()
         {
             logger.LogInformation("Retrieving orders");
 
-            return orderStorage.GetOrders();
+            var orders = orderStorage.GetOrders();
+
+            if(!orders.Any())
+            {
+                logger.LogWarning("No orders exist in system");
+            }
+
+            return Ok(orderStorage.GetOrders());
         }
 
         [HttpDelete("{id}")]

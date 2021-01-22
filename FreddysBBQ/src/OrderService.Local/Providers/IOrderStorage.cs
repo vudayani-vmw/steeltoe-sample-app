@@ -13,5 +13,9 @@ namespace OrderService.Providers
         Order GetOrderById(int id);
 
         ValueTask<Order> DeleteOrderAsync(Order order);
+
+        IEnumerable<Order> GetOrderByCustomerId(string id);
+
+        ValueTask<Order> AddOrderAsync(Order order);
     }
 }

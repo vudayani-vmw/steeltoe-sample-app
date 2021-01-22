@@ -1,6 +1,5 @@
 ﻿using Common.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,13 +17,11 @@ namespace OrderService.Providers
         public IEnumerable<Order> GetOrders() =>
             Orders.Include(order => order.OrderItems);
 
-        public Order GetOrderById(int id)
-        {
-            return Orders
+        public Order GetOrderById(int id) =>
+            Orders
                 .Where(order => order.Id == id)
                 .Include(order => order.OrderItems)
                 .FirstOrDefault();
-        }
 
         public async ValueTask<Order> DeleteOrderAsync(Order order)
         {
@@ -33,14 +30,26 @@ namespace OrderService.Providers
                 DeleteOrderItem(item);
             }
 
-            var deletedOrder = Orders.Remove(order).Entity;
+            var deletedOrderEntityEntry = Orders.Remove(order);
 
             await SaveChangesAsync();
 
-            return deletedOrder;
+            return deletedOrderEntityEntry.Entity;
         }
 
         private OrderItem DeleteOrderItem(OrderItem orderItem) =>
             OrderItems.Remove(orderItem).Entity;
+
+        public IEnumerable<Order> GetOrderByCustomerId(string id) =>
+            Orders.Where(o => o.CustomerId == id).Include(o => o.OrderItems);
+
+        public async ValueTask<Order> AddOrderAsync(Order order)
+        {
+            var orderEntityEntry = Orders.Add(order);
+
+            await SaveChangesAsync();
+
+            return orderEntityEntry.Entity;
+        }
     }
 }
