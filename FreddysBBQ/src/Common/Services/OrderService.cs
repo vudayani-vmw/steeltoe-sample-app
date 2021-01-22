@@ -14,8 +14,8 @@ namespace Common.Services
         // private const string ORDERS_URL = "http://order-service/orders";
         private const string ORDERS_URL = "http://localhost:63758/api/order";
 
-        public OrderService(IDiscoveryClient client, ILoggerFactory factory, IHttpContextAccessor context) :
-            base(client, factory.CreateLogger<MenuService>(), context)
+        public OrderService(IDiscoveryClient client, ILogger<OrderService> logger, IHttpContextAccessor context) :
+            base(client, logger, context)
         {
         }
 

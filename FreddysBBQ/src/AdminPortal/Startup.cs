@@ -50,7 +50,7 @@ namespace AdminPortal
 
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("MenuWrite", policy => policy.RequireClaim("scope", "orders.read"));
+                options.AddPolicy("MenuWrite", policy => policy.RequireClaim("scope", "order.me"));
                 options.AddPolicy("AdminOrders", policy => policy.RequireClaim("scope", "order.admin"));
             });
 

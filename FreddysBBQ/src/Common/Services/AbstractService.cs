@@ -17,9 +17,9 @@ namespace Common.Services
 {
     public abstract class AbstractService 
     {
-        protected DiscoveryHttpClientHandler _handler;
-        protected ILogger<AbstractService> _logger;
-        protected IHttpContextAccessor _context;
+        protected readonly DiscoveryHttpClientHandler _handler;
+        protected readonly ILogger<AbstractService> _logger;
+        protected readonly IHttpContextAccessor _context;
 
         public AbstractService(IDiscoveryClient client, ILogger<AbstractService> logger, IHttpContextAccessor context)
         {

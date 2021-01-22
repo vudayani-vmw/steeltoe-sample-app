@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace OrderService.Controllers
 {
     [Authorize(Policy = "Orders")]
-    [Route("/customer")]
+    [Route("/myorders")]
     public class CustomerOrderController : Controller
     {
         private readonly IOrderStorage orderStorage;
@@ -28,7 +28,7 @@ namespace OrderService.Controllers
             this.logger = logger;
         }
 
-        [HttpGet("order")]
+        [HttpGet]
         [Produces("application/json")]
         [ProducesResponseType(typeof(IEnumerable<Order>), StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<Order>> GetMyOrders()
@@ -56,7 +56,7 @@ namespace OrderService.Controllers
             return Ok(orders);
         }
 
-        [HttpPost("order")]
+        [HttpPost]
         [Produces("application/json")]
         [ProducesResponseType(typeof(Order), StatusCodes.Status200OK)]
         public async ValueTask<ActionResult<Order>> Post([FromBody]Dictionary<long, int?> itemsAndQuantities)

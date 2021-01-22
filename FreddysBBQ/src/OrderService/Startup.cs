@@ -70,7 +70,6 @@ namespace OrderService
                  {
                      x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                      x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                     // x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
                  })
 #if !DEBUG
                  .AddCloudFoundryJwtBearer(Configuration);
@@ -96,8 +95,8 @@ namespace OrderService
 #endif
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("Orders", policy => policy.RequireClaim("scope", "orders.read"));
-                options.AddPolicy("AdminOrders", policy => policy.RequireClaim("scope", "orders.admin"));
+                options.AddPolicy("Orders", policy => policy.RequireClaim("scope", "order.me"));
+                options.AddPolicy("AdminOrders", policy => policy.RequireClaim("scope", "order.admin"));
             }); 
 
             services.AddDbContext<IOrderStorage, OrderStorage>(options => options.UseMySql(Configuration));
