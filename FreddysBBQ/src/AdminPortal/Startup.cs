@@ -56,7 +56,9 @@ namespace AdminPortal
 
             services.AddDiscoveryClient(Configuration);
 
-            services.AddSingleton<IMenuService, MockMenuService>();
+            services.Configure<ServiceUrl>(Configuration.GetSection(nameof(ServiceUrl)));
+            services.AddSingleton<IMenuService, MenuService>();
+            // services.AddSingleton<IMenuService, MockMenuService>();
             services.AddSingleton<IOrderService, OrderService>();
 
             services.AddControllersWithViews();

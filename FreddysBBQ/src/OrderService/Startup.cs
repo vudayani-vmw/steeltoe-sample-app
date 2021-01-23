@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Steeltoe.Security.Authentication.CloudFoundry;
 using Microsoft.AspNetCore.HttpOverrides;
 using Common.Services;
+using Common.Models;
 
 namespace OrderService
 {
@@ -97,11 +98,13 @@ namespace OrderService
             {
                 options.AddPolicy("Orders", policy => policy.RequireClaim("scope", "order.me"));
                 options.AddPolicy("AdminOrders", policy => policy.RequireClaim("scope", "order.admin"));
-            }); 
+            });
 
+            services.Configure<ServiceUrl>(Configuration.GetSection(nameof(ServiceUrl)));
             services.AddDbContext<IOrderStorage, OrderStorage>(options => options.UseMySql(Configuration));
             services.AddTransient<IOrderStorage, OrderStorage>();
-            services.AddTransient<IMenuService, MockMenuService>();
+            services.AddTransient<IMenuService, MenuService>();
+            // services.AddTransient<IMenuService, MockMenuService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
