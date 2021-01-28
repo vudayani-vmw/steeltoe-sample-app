@@ -50,7 +50,7 @@ namespace AdminPortal
 
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("MenuWrite", policy => policy.RequireClaim("scope", "order.me"));
+                options.AddPolicy("MenuWrite", policy => policy.RequireClaim("scope", "menu.write"));
                 options.AddPolicy("AdminOrders", policy => policy.RequireClaim("scope", "order.admin"));
             });
 
@@ -58,7 +58,6 @@ namespace AdminPortal
 
             services.Configure<ServiceUrl>(Configuration.GetSection(nameof(ServiceUrl)));
             services.AddSingleton<IMenuService, MenuService>();
-            // services.AddSingleton<IMenuService, MockMenuService>();
             services.AddSingleton<IOrderService, OrderService>();
 
             services.AddControllersWithViews();

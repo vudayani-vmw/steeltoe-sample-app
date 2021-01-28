@@ -13,6 +13,7 @@ using Steeltoe.Security.Authentication.CloudFoundry;
 using Microsoft.AspNetCore.HttpOverrides;
 using Common.Services;
 using Common.Models;
+using OrderService.Models;
 
 namespace OrderService
 {
@@ -91,7 +92,7 @@ namespace OrderService
                         cloudFoundryJwtBearerOptions.TokenValidationParameters,
                         cloudFoundryJwtBearerOptions.JwtKeyUrl,
                         options.BackchannelHttpHandler, false,
-                        new AuthServerOptions { AdditionalAudiences = new string[] { "adminportal", "orderservice" } });
+                        new AuthServerOptions { AdditionalAudiences = new string[] { "menu", "order", "admin-portal" } });
                 });
 #endif
             services.AddAuthorization(options =>
@@ -104,7 +105,6 @@ namespace OrderService
             services.AddDbContext<IOrderStorage, OrderStorage>(options => options.UseMySql(Configuration));
             services.AddTransient<IOrderStorage, OrderStorage>();
             services.AddTransient<IMenuService, MenuService>();
-            // services.AddTransient<IMenuService, MockMenuService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -133,6 +133,8 @@ namespace OrderService
             {
                 endpoints.MapControllers();
             });
+
+            SampleData.InitializeOrderDatabase(app.ApplicationServices);
         }
     }
 }
