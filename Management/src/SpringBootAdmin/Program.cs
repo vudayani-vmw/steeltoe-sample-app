@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Steeltoe.Management.Endpoint;
 using Steeltoe.Extensions.Configuration.CloudFoundry;
+using Microsoft.AspNetCore;
+using Steeltoe.Common.Hosting;
 
 namespace SpringBootAdmin
 {
@@ -10,7 +12,16 @@ namespace SpringBootAdmin
     {
         public static void Main(string[] args)
         {
-            BuildWebHost(args).Run();
+            var host = WebHost.CreateDefaultBuilder(args)
+                                .AddCloudFoundryConfiguration()
+                                .AddAllActuators()
+                                .UseCloudHosting()
+                                .UseStartup<Startup>()
+                                .Build();
+
+            host.Run();
+            
+            // BuildWebHost(args).Run();
         }
 
         public static IHost BuildWebHost(string[] args) =>
@@ -18,8 +29,8 @@ namespace SpringBootAdmin
                 .AddCloudFoundryConfiguration()
                 .ConfigureWebHost(configure =>
                 {
-                    configure.UseStartup<Startup>().UseKestrel();
-                    configure.UseUrls("http://host.docker.internal:5000");
+                    // configure.UseStartup<Startup>().UseKestrel();
+                    configure.UseUrls("https://sbo-integration.apps.pcfone.io");
                 })
                .AddAllActuators(endpoints => endpoints.RequireAuthorization("actuators.read"))
                .Build();

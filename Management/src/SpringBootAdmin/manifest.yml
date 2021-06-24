@@ -1,11 +1,11 @@
 ﻿---
 applications:
-- name: actuator
-  buildpacks:
-   - dotnet_core_buildpack
-  memory: 128M
-  command: cd ${HOME} && ./CloudFoundry
+- name: sbo-integration
+  memory: 1024M
+  stack: windows
+  buildpack: dotnet_core_buildpack
+  command: cd ${DEPS_DIR}/0/dotnet_publish && exec ./SpringBootAdmin --server.urls https://sbo-integration.apps.pcfone.io
   env:
     ASPNETCORE_ENVIRONMENT: Development
   services:
-   - myMySqlService
+   - mySqlService
