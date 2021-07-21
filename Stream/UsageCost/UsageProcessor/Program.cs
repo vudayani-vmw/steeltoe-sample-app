@@ -11,16 +11,15 @@ namespace UsageProcessor
 {
     public class Program
     {
-
         static async Task Main(string[] args)
         {
             await StreamHost.CreateDefaultBuilder<UsageProcessor>(args)
-            .ConfigureWebHostDefaults(webhostBuilder => webhostBuilder.UseStartup<Startup>())
-            .AddCloudFoundryConfiguration()
-            .UseCloudHosting()
-            .AddPlaceholderResolver()
-            .AddAllActuators()
-            .RunConsoleAsync();
+                .ConfigureWebHostDefaults(webhostBuilder => webhostBuilder.UseStartup<Startup>())
+                .AddCloudFoundryConfiguration()
+                .UseCloudHosting()
+                .AddPlaceholderResolver()
+                .AddAllActuators()
+                .RunConsoleAsync();
         }
     }
 }

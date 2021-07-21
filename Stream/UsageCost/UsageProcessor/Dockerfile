@@ -11,5 +11,5 @@ FROM mcr.microsoft.com/dotnet/aspnet:5.0
 WORKDIR /app
 COPY --from=build /app .
 ENV SPRING_RABBITMQ_HOST=host.docker.internal
-
+ENV PORT=8080
 ENTRYPOINT ["dotnet", "UsageProcessor.dll"]
