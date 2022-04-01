@@ -6,8 +6,10 @@ applications:
   memory: 512M
   env:
     ASPNETCORE_ENVIRONMENT: Development
-    DOTNET_CLI_TELEMETRY_OPTOUT: true
-    DOTNET_NOLOGO: true
+    DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+    DOTNET_NOLOGO: "true"
+    Management__Endpoints__Heapdump__Enabled: "true"
+    Management__Endpoints__Heapdump__HeapDumpType: gcdump
   services:
    - myMySqlService
   random-route: true
