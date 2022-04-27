@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: steeltoe-actuators-app
+  description: SteelToe Actuators App
+  tags:
+    - app-accelerator
+    - java
+    - spring
+    - web
+    - tanzu
+  annotations:
+    'backstage.io/kubernetes-label-selector': 'app.kubernetes.io/part-of=steeltoe-actuators-app'
+spec:
+  type: service
+  lifecycle: experimental
+  owner: default-team
+  system: steeltoe-actuators-app
